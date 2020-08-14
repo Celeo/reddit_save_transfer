@@ -6,7 +6,19 @@ You must own both accounts.
 
 ## Using
 
-TODO
+Note: this program is not tailored for non-technical users. Some technical knowledge is required.
+
+```sh
+git clone https://github.com/Celeo/reddit_save_transfer
+cd reddit_save_transfer
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then you can do `python main.py download` to download your saved submission to a text file, and `python main.py upload` to upload those to another account.
+
+Authentication is done through Reddit's OAuth; you will not be entering your password into this application. While it's certainly short enough for you to audit the code to make sure that nothing weird is being done with your credentials, utilizing this authorization flow avoids all of that.
 
 ## Developing
 
@@ -19,11 +31,7 @@ TODO
 
 ### Steps
 
-```sh
-git clone https://github.com/Celeo/reddit_save_transfer
-cd reddit_save_transfer
-TODO
-```
+Pretty much the same as running it.
 
 ## Contributing
 
