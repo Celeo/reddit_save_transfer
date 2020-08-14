@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 import os
 import webbrowser
 from time import sleep
@@ -6,13 +7,13 @@ from time import sleep
 import click
 from flask import Flask, request, render_template_string
 from praw import Reddit
-from praw.models import Submission
+from praw.models import Comment, Submission
 
 
 CLIENT_ID = '2fINEZ0uC_0jAg'
 USER_AGENT = 'https://github.com/celeo/reddit_save_transfer'
 REDIRECT_URI = 'http://localhost:5000/callback'
-SCOPES = ['identity', 'history', 'save']
+SCOPES = ['identity', 'history', 'save', 'read']
 TEMPLATE_STRING = """
 <html>
     <body>
@@ -25,7 +26,7 @@ TEMPLATE_STRING = """
     </body>
 </html>
 """
-SAVE_FILE_NAME = 'saved_posts.txt'
+SAVE_FILE_NAME = 'saved_posts.json'
 
 
 class Action(Enum):
@@ -73,20 +74,35 @@ def finish_processing(action: Action, access_token: str) -> None:
     reddit = get_reddit()
     reddit.auth.implicit(access_token, 3600, ' '.join(SCOPES))
     if action == Action.Download:
-        count = 0
-        print('Getting saved posts ...')
+        print('Getting saved submissions ...')
+        submissions = []
+        for item in reddit.user.me().saved(limit=None):
+            if isinstance(item, (Comment, )):
+                submissions.append({
+                    "type": "comment",
+                    "id": item.id,
+                    "link_id": item.link_id,
+                    "submission_id": item.submission.id,
+                    "subreddit": item.subreddit.display_name,
+                })
+            else:
+                submissions.append({
+                    "type": "post",
+                    "id": item.id,
+                    "subreddit": item.subreddit.display_name,
+                    "title": item.title,
+                    "is_self": item.is_self,
+                    "url": item.url,
+                })
         with open(SAVE_FILE_NAME, 'w') as f:
-            for item in reddit.user.me().saved(limit=None):
-                f.write(f'{item.id}\n')
-                count += 1
-            print(f'Done, recorded {count} saved submissions to "{SAVE_FILE_NAME}"')
+            json.dump(submissions, f, indent=2)
     elif action == Action.Upload:
         with open(SAVE_FILE_NAME) as f:
-            submission_ids = [line.strip() for line in f.readlines()]
-        for index, submission_id in enumerate(submission_ids):
-            print(f'Saving submission {index + 1} of {len(submission_ids)}')
-            Submission(reddit=reddit, id=submission_id).save()
-            sleep(1)  # API rate limit is 60/min, this is close enough
+            data = json.load(f)
+        for index, item in enumerate(data[::-1]):
+            print(f'Saving submission {index + 1} of {len(data)}')
+            Submission(reddit=reddit, id=item['id']).save()
+            sleep(1)  # API rate limit is 60/min; this is close enough
     else:
         raise ValueError(f'Unknown action {action}')
 

@@ -1,4 +1,4 @@
 venv
 *.pyc
 __pycache__
-saved_posts.txt
+saved_posts.json
