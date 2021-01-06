@@ -10,7 +10,7 @@ from praw import Reddit
 from praw.models import Comment, Submission
 
 
-CLIENT_ID = '2fINEZ0uC_0jAg'
+CLIENT_ID = ''
 USER_AGENT = 'https://github.com/celeo/reddit_save_transfer'
 REDIRECT_URI = 'http://localhost:5000/callback'
 SCOPES = ['identity', 'history', 'save', 'read']
